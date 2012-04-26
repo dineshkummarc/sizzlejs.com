@@ -48,36 +48,26 @@ grunt.registerTask( "wordpress-publish", "Generate posts in WordPress from HTML 
 		},
 
 		function publishPosts( postPaths, fn ) {
-			var dir = "dist/",
-				posts = {};
+			var posts = {};
 
-			recurse( dir, function( file, fn ) {
-				var postPath = file.substr( dir.length, file.length - dir.length - 5 ),
-					parts = postPath.split( "/" ),
-					name = parts.pop(),
-					parent = parts.length > 1 ? parts.join( "/" ) : null,
-					type = parts.shift(),
-					post = grunt.helper( "wordpress-parse-post", file );
-
-				post.id = postPaths[ postPath ];
-				post.type = type;
-				post.name = name;
+			grunt.helper( "wordpress-walk", "dist/", function( post, fn ) {
+				post.id = postPaths[ post.__postPath ];
 				if ( !post.status ) {
 					post.status = "publish";
 				}
-				if ( parent ) {
-					post.parent = postPaths[ parent ] || posts[ parent ];
+				if ( post.__parent ) {
+					post.parent = postPaths[ post.__parent ] || posts[ post.__parent ];
 				}
 
 				grunt.helper( "wordpress-publish-post", post, function( error, id ) {
 					if ( error ) {
-						grunt.log.error( "Error publishing " + prettyName( postPath ) + "." );
+						grunt.log.error( "Error publishing " + prettyName( post.__postPath ) + "." );
 						return fn( error );
 					}
 
-					grunt.log.writeln( "Published " + prettyName( postPath ).green + "." );
-					posts[ postPath ] = id;
-					delete postPaths[ postPath ];
+					grunt.log.writeln( "Published " + prettyName( post.__postPath ).green + "." );
+					posts[ post.__postPath ] = id;
+					delete postPaths[ post.__postPath ];
 					fn( null );
 				});
 			}, function( error ) {
@@ -126,6 +116,46 @@ grunt.registerTask( "wordpress-publish", "Generate posts in WordPress from HTML 
 	});
 });
 
+grunt.registerTask( "wordpress-validate", "Validate HTML files for publishing to WordPress", function() {
+	var done = this.async(),
+		count = 0;
+
+	grunt.helper( "wordpress-walk", "dist/", function( post, fn ) {
+		count++;
+		fn( null );
+	}, function( error ) {
+		if ( error ) {
+			grunt.log.error( error );
+			return done( false );
+		}
+
+		grunt.log.writeln( "Validated " + count + " files." );
+		done();
+	});
+});
+
+grunt.registerHelper( "wordpress-walk", function( dir, walkFn, complete ) {
+	recurse( dir, function( file, fn ) {
+		var postPath = file.substr( dir.length, file.length - dir.length - 5 ),
+			parts = postPath.split( "/" ),
+			name = parts.pop(),
+			parent = parts.length > 1 ? parts.join( "/" ) : null,
+			type = parts.shift(),
+			post = grunt.helper( "wordpress-parse-post", file );
+
+		if ( !post ) {
+			return fn( new Error( "Invalid post: " + file ) );
+		}
+
+		post.type = type;
+		post.name = name;
+		post.__parent = parent;
+		post.__postPath = postPath;
+
+		walkFn( post, fn );
+	}, complete );
+});
+
 // Parse an html file into a post object. The metadata for the post is read
 // out of a <script> element containing JSON at the top of the file.
 grunt.registerHelper( "wordpress-parse-post", function( path ) {
@@ -135,9 +165,14 @@ grunt.registerHelper( "wordpress-parse-post", function( path ) {
 
 	// The metadata is optional, if it exists it must be the first characater
 	if ( content.substring( 0, 8 ) === "<script>" ) {
-		index = content.indexOf( "</script>" );
-		post = JSON.parse( content.substr( 8, index - 8 ) );
-		content = content.substr( index + 9 );
+		try {
+			index = content.indexOf( "</script>" );
+			post = JSON.parse( content.substr( 8, index - 8 ) );
+			content = content.substr( index + 9 );
+		} catch( error ) {
+			grunt.log.error( "Invalid JSON metadata for " + path );
+			return null;
+		}
 	}
 
 	post.content = content;
@@ -159,5 +194,7 @@ grunt.registerHelper( "wordpress-publish-post", function( post, fn ) {
 		client.newPost( post, fn );
 	}
 });
+
+grunt.registerTask( "wordpress-deploy", "build wordpress-publish" );
 
 };
