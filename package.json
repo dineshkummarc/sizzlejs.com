@@ -7,6 +7,15 @@
     "type": "git",
     "url": "git://github.com/jquery/sizzlejs.com.git"
   },
+  "bugs": {
+    "url": "https://github.com/jquery/sizzlejs.com/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/MIT"
+    }
+  ],
   "engines": {
     "node": "*"
   },
