@@ -1,0 +1,19 @@
+{
+  "author": "jQuery Foundation (http://jquery.org)",
+  "name": "sizzlejs.com",
+  "version": "0.0.0",
+  "homepage": "http://sizzlejs.com",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jquery/sizzlejs.com.git"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {
+    "grunt": "0.3.x",
+    "wordpress": "0.0.3"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
