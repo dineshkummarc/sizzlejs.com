@@ -6,4 +6,8 @@ grunt.initConfig({
 	wordpress: grunt.file.readJSON( "config.json" )
 });
 
+grunt.registerTask( "build", function() {
+	grunt.file.copy( "index.html", "dist/page/index.html" );
+});
+
 };
