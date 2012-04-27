@@ -1,5 +1,5 @@
 {
-	"host": "wordpress.local",
+	"host": "wordpress.dev",
 	"port": 80,
 	"path": "/xmlrpc.php",
 	"username": "admin",
