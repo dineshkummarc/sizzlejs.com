@@ -183,12 +183,47 @@ grunt.registerHelper( "wordpress-parse-post", function( path ) {
 grunt.registerHelper( "wordpress-publish-post", function( post, fn ) {
 	var client = getClient();
 	if ( post.id ) {
-		client.editPost( post.id, post, function( error ) {
+		// Get existing custom fields
+		client.getPost( post.id, [ "customFields" ], function( error, postData ) {
 			if ( error ) {
 				return fn( error );
 			}
 
-			fn( null, post.id );
+			// If there are any existing custom fields, then we need to determine
+			// what to add, edit, and delete.
+			if ( postData.customFields.length ) {
+				post.customFields = post.customFields || [];
+				post.customFields.forEach(function( customField ) {
+					// Look for exact matches
+					var index;
+					if ( postData.customFields.some(function( existingCustomField, i ) {
+						index = i;
+						return customField.key === existingCustomField.key &&
+							customField.value === existingCustomField.value;
+					})) {
+						// Copy the id to do an update and remove from the list
+						// of existing custom fields
+						customField.id = postData.customFields[ index ].id;
+						postData.customFields.splice( index, 1 );
+					}
+				});
+
+				// Delete any existing custom fields that are left over
+				post.customFields = post.customFields.concat(
+					postData.customFields.map(function( customField ) {
+						return { id: customField.id };
+					})
+				);
+			}
+
+			// Update the post
+			client.editPost( post.id, post, function( error ) {
+				if ( error ) {
+					return fn( error );
+				}
+
+				fn( null, post.id );
+			});
 		});
 	} else {
 		client.newPost( post, fn );
