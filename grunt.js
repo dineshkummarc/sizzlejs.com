@@ -10,4 +10,6 @@ grunt.registerTask( "build", function() {
 	grunt.file.copy( "index.html", "dist/page/index.html" );
 });
 
+grunt.registerTask( "default", "build" );
+
 };
