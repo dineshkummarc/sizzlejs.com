@@ -2,17 +2,16 @@ module.exports = function( grunt ) {
 
 grunt.loadNpmTasks( "grunt-wordpress" );
 
-
 grunt.initConfig({
 	wordpress: grunt.utils._.extend({
-		dir: "dist",
+		dir: "dist"
 	}, grunt.file.readJSON( "config.json" ) )
 });
 
-grunt.registerTask( "build", function() {
-	grunt.file.copy( "index.html", "dist/page/index.html" );
+grunt.registerTask( "build-wordpress", function() {
+	grunt.file.copy( "index.html", "dist/posts/page/index.html" );
 });
 
-grunt.registerTask( "default", "build" );
+grunt.registerTask( "default", "build-wordpress" );
 
 };
